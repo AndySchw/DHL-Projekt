@@ -18,6 +18,15 @@ resource "aws_lambda_event_source_mapping" "dynamodb_event_source" {
   event_source_arn = aws_dynamodb_table.OrderDB.stream_arn
   function_name = aws_lambda_function.get_driver.arn
   starting_position          = "LATEST"
+  
+  filter_criteria {
+    filter {
+      pattern = jsonencode({
+        eventName = ["INSERT"],
+        eventSource = ["aws:dynamodb"]
+      })
+    }
+  }
 }
 
 
@@ -75,13 +84,20 @@ resource "aws_iam_policy" "lambda_policy" {
       "logs:PutLogEvents"
     ],
     Effect = "Allow",
-    Resource = "arn:aws:logs:::*"
+    Resource = "*"
     }
     
     ]
   })
 }
 
+############################CloudWatch############################
+
+# CloudWatch Log Group
+resource "aws_cloudwatch_log_group" "getdriver_log" {
+  name              = "/aws/lambda/${aws_lambda_function.orderput.function_name}"
+  retention_in_days = 14
+}
 
 
 
