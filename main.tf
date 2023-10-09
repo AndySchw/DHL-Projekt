@@ -54,6 +54,23 @@ resource "aws_lambda_function" "orderput" {
 }
 
 
+resource "aws_lambda_function" "fahrer_lambda" {
+  function_name = "fahrer_lambda"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "filter.lambda_handler" 
+  runtime       = "python3.9"  
+
+  filename = "./filter/filter.zip"
+
+  environment {
+    variables = {
+      QUEUE_URL         = aws_sqs_queue.sqs_verteiler.url
+      FAHRER_TABLE_NAME = aws_dynamodb_table.Fahrer.name
+      # Weitere Umgebungsvariablen hier hinzufügen, wenn nötig
+    }
+  }
+}
+
 
 
 ############################CloudWatch############################
@@ -124,14 +141,14 @@ resource "aws_sqs_queue" "sqs_verteiler" {
 resource "aws_sqs_queue" "deadletter" {
   name = "deadletter.fifo"
   fifo_queue = true
-  redrive_allow_policy = jsonencode({
-    redrivePermission = "byQueue",
-    sourceQueueArns   = [aws_sqs_queue.sqs_verteiler.arn]
-  })
+  # redrive_allow_policy = jsonencode({
+  #   redrivePermission = "byQueue",
+  #   sourceQueueArns   = [aws_sqs_queue.sqs_verteiler.arn]
+  # })
 }
 
 
-####################33333- IAM -################################33
+####################- IAM -################################
 
 # Berechtigt Lambda an SQS und DynamoDB
 resource "aws_iam_role" "lambda_role" {
@@ -163,6 +180,11 @@ resource "aws_iam_role_policy" "lambda_policy" {
       },
       {
         Action = "dynamodb:*",
+        Effect = "Allow",
+        Resource = "*"
+      },
+      {
+        Action = "ses:*",
         Effect = "Allow",
         Resource = "*"
       },

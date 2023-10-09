@@ -46,7 +46,7 @@ def random_email():
 
 def random_status():
     """Generate a random status."""
-    return random.choice(["Frei", "Belegt"])
+    return random.choice(["frei", "belegt"])
 
 def random_region():
     """Generate a random region."""
@@ -96,7 +96,8 @@ def lambda_handler(event, context):
                 "pz": random_paketzentrum(),
                 "status": random_status(),
                 "paketID": None,
-                "email": random_email(),
+                # "email": random_email(),
+                "email": "andy.emich@docc.techstarter.de",
                 "timestamp": int(time.time() * 1000)  # Current time in milliseconds
             }
 
