@@ -12,6 +12,8 @@ resource "aws_lambda_function" "get_driver" {
   
 
   filename = "./getdriver/index.zip"
+
+  
 }
 
 resource "aws_lambda_event_source_mapping" "dynamodb_event_source" {
