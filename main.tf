@@ -124,10 +124,10 @@ resource "aws_sqs_queue" "sqs_verteiler" {
 resource "aws_sqs_queue" "deadletter" {
   name = "deadletter.fifo"
   fifo_queue = true
-  # redrive_allow_policy = jsonencode({
-  #   redrivePermission = "byQueue",
-  #   sourceQueueArns   = [aws_sqs_queue.sqs_verteiler.arn]
-  # })
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "byQueue",
+    sourceQueueArns   = [aws_sqs_queue.sqs_verteiler.arn]
+  })
 }
 
 
