@@ -38,6 +38,11 @@ resource "aws_lambda_event_source_mapping" "dynamodb_event_source" {
   }
 }
 
+resource "aws_lambda_event_source_mapping" "sqs_event_source" {
+  event_source_arn = aws_sqs_queue.sqs_verteiler.arn
+  function_name    = aws_lambda_function.fahrer_lambda.function_name
+  batch_size       = 1  # Adjust based on your use case
+}
 
 resource "aws_lambda_function" "orderput" {
   function_name = "orderlambda"
@@ -60,7 +65,7 @@ resource "aws_lambda_function" "fahrer_lambda" {
   role          = aws_iam_role.lambda_role.arn
   handler       = "filter.lambda_handler" 
   runtime       = "python3.9"  
-  timeout = 10
+  timeout = 25
 
   filename = "./filter/filter.zip"
 

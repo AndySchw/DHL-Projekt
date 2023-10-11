@@ -28,13 +28,13 @@ def lambda_handler(event, context):
                 'recipient_name': recipient_name
             }
     
-    try:
-        sqs.send_message(
-            QueueUrl=queue_url,
-            MessageBody=json.dumps(message_body),
-            MessageGroupId='packageID',  # Replace with an appropriate value for your use case
-        )
-    except Exception as e:
-        print(f"Error sending message to SQS: {str(e)}")
+            try:
+                sqs.send_message(
+                    QueueUrl=queue_url,
+                    MessageBody=json.dumps(message_body),
+                    MessageGroupId= packageID,  # Replace with an appropriate value for your use case
+                )
+            except Exception as e:
+                print(f"Error sending message to SQS: {str(e)}")
     
     return {"statusCode": 200, "body": "Processed records"}

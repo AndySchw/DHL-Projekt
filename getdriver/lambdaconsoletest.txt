@@ -1,0 +1,32 @@
+{
+  "Records": [
+    {
+      "eventName": "INSERT",
+      "dynamodb": {
+        "Keys": {
+          "packageID": {"S": "examplePackageID1"}
+        },
+        "NewImage": {
+          "packageID": {"S": "examplePackageID1"},
+          "restrictions": {"S": "Zerbrechlich"},
+          "recipient_address": {"S": "123 Main St"},
+          "recipient_name": {"S": "John Doe"}
+        }
+      }
+    },
+    {
+      "eventName": "INSERT",
+      "dynamodb": {
+        "Keys": {
+          "packageID": {"S": "examplePackageID2"}
+        },
+        "NewImage": {
+          "packageID": {"S": "examplePackageID2"},
+          "restrictions": {"S": "Flammable"},
+          "recipient_address": {"S": "456 Oak St"},
+          "recipient_name": {"S": "Jane Smith"}
+        }
+      }
+    }
+  ]
+}
