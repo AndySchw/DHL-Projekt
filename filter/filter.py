@@ -13,7 +13,7 @@ ses = boto3.client('ses')
 # Your resources ARNs or names
 QUEUE_URL = os.environ['QUEUE_URL']
 FAHRER_TABLE_NAME = 'Fahrer'
-BESTELLUNGEN_TABLE_NAME = 'OrderDB'
+BESTELLUNGEN_TABLE_NAME = 'Orders'
 
 def lambda_handler(event, context):
     # 3. LAMBDA fragt Queue an
@@ -51,7 +51,10 @@ def lambda_handler(event, context):
     # 5. LAMBDA passt DynamoDB (Table Fahrer) den Status des gewählten Fahrers an ( nicht belegt)
     fahrer_table.update_item(
         Key={'fahrerID': chosen_fahrer['fahrerID']},
-        UpdateExpression='SET status = :status, current_package = :package_id',
+        UpdateExpression='SET #status = :status, current_package = :package_id',
+        ExpressionAttributeNames={
+            '#status': 'status',
+        },
         ExpressionAttributeValues={
             ':status': 'belegt',
             ':package_id': package_id
@@ -77,17 +80,17 @@ def lambda_handler(event, context):
     """
 
     try:
-        ses.send_email(
+        response = ses.send_email(
             Source='andy.emich@docc.techstarter.de',
             Destination={
                 'ToAddresses': [chosen_fahrer['email']],
             },
             Message={
-                'Subject': {'Data': 'Neues Paket'},
+             'Subject': {'Data': 'Neues Paket'},
                 'Body': {'Text': {'Data': EMAIL_TEXT}},
-            }
+           }
         )
-        print(f"Email sent to {chosen_fahrer['email']}")
+        print(f"SES response: {response}")
     except ClientError as e:
         print(f"Error sending email: {str(e)}")
     

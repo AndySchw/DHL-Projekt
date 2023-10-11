@@ -77,24 +77,6 @@ resource "aws_lambda_function" "fahrer_lambda" {
 
 ############################ CloudWatch ############################
 
-# # CloudWatch Log Group für get_driver Lambda-Funktion
-# resource "aws_cloudwatch_log_group" "get_driver_log" {
-#   name              = "/aws/lambda/${aws_lambda_function.get_driver.function_name}"
-#   retention_in_days = 14
-# }
-
-# # CloudWatch Log Group für orderput Lambda-Funktion
-# resource "aws_cloudwatch_log_group" "orderput_log" {
-#   name              = "/aws/lambda/${aws_lambda_function.orderput.function_name}"
-#   retention_in_days = 14
-# }
-
-# # CloudWatch Log Group für fahrer_lambda Lambda-Funktion
-# resource "aws_cloudwatch_log_group" "fahrer_lambda_log" {
-#   name              = "/aws/lambda/${aws_lambda_function.fahrer_lambda.function_name}"
-#   retention_in_days = 14
-# }
-
 resource "aws_cloudwatch_log_group" "cloudtrail_log" {
   name              = "/aws/cloudtrail/logs"
   retention_in_days = 14
