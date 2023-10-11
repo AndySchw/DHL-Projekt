@@ -2,6 +2,8 @@ import boto3
 import json
 import os
 from botocore.exceptions import ClientError
+from boto3.dynamodb.conditions import Attr
+
 
 # AWS services clients
 sqs = boto3.client('sqs')
@@ -11,6 +13,7 @@ ses = boto3.client('ses')
 # Your resources ARNs or names
 QUEUE_URL = os.environ['QUEUE_URL']
 FAHRER_TABLE_NAME = 'Fahrer'
+BESTELLUNGEN_TABLE_NAME = 'OrderDB'
 
 def lambda_handler(event, context):
     # 3. LAMBDA fragt Queue an
@@ -32,6 +35,8 @@ def lambda_handler(event, context):
     
     # 4. Anfrage an DynamoDB (Table Fahrer) ob ein Fahrer verfügbar ist
     fahrer_table = dynamodb.Table(FAHRER_TABLE_NAME)
+    bestellungen_table = dynamodb.Table(BESTELLUNGEN_TABLE_NAME)
+
     # Assuming that your table has a 'status' attribute and a primary key 'fahrerID'
     available_fahrer = fahrer_table.scan(
         FilterExpression=Attr('status').eq('frei')
@@ -52,6 +57,16 @@ def lambda_handler(event, context):
             ':package_id': package_id
         }
     )
+
+
+    bestellungen_table.update_item(
+        Key={'packageID': package_id},
+        UpdateExpression='SET lieferstatus = :lieferstatus',
+        ExpressionAttributeValues={
+            ':lieferstatus': 'zugewiesen',  # or whatever status you'd like to set
+        }
+    )
+
 
     # 6. LAMBDA Infos an SES weiterreichen um EMAIL zu versenden Fahrer_Email, Paket_ID, DynamoDB Table ITEM Werte in formatierte Variante
     EMAIL_TEXT = f"""

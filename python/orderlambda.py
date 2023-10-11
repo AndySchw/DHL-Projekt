@@ -80,7 +80,8 @@ def lambda_handler(event, context):
             "insurance_type": random.choice(["Basic", "Premium", "Gold"]),
             "insurance_value": random.randint(1, 5000),
             "restrictions": random.choice(["Sperrgut", "Zerbrechlich", "Liquid", "Flammable"]),  # Two random restrictions
-            "value": random.randint(1, 1000)
+            "value": random.randint(1, 1000),
+            "lieferstatus": "ausstehend"
         }
 
         # Insert the item into the DynamoDB table

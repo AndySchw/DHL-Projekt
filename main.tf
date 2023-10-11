@@ -1,8 +1,9 @@
+
 provider "aws" {
   region = "eu-central-1"  
 }
 
-#############################Lambda##################################
+############################# - Lambda - ##################################
 
 resource "aws_lambda_function" "get_driver" {
   function_name = "getdriverlambda"
@@ -59,6 +60,7 @@ resource "aws_lambda_function" "fahrer_lambda" {
   role          = aws_iam_role.lambda_role.arn
   handler       = "filter.lambda_handler" 
   runtime       = "python3.9"  
+  timeout = 10
 
   filename = "./filter/filter.zip"
 
@@ -73,17 +75,34 @@ resource "aws_lambda_function" "fahrer_lambda" {
 
 
 
-############################CloudWatch############################
+############################ CloudWatch ############################
 
-# CloudWatch Log Group
-resource "aws_cloudwatch_log_group" "getdriver_log" {
-  name              = "/aws/lambda/${aws_lambda_function.orderput.function_name}"
+# # CloudWatch Log Group für get_driver Lambda-Funktion
+# resource "aws_cloudwatch_log_group" "get_driver_log" {
+#   name              = "/aws/lambda/${aws_lambda_function.get_driver.function_name}"
+#   retention_in_days = 14
+# }
+
+# # CloudWatch Log Group für orderput Lambda-Funktion
+# resource "aws_cloudwatch_log_group" "orderput_log" {
+#   name              = "/aws/lambda/${aws_lambda_function.orderput.function_name}"
+#   retention_in_days = 14
+# }
+
+# # CloudWatch Log Group für fahrer_lambda Lambda-Funktion
+# resource "aws_cloudwatch_log_group" "fahrer_lambda_log" {
+#   name              = "/aws/lambda/${aws_lambda_function.fahrer_lambda.function_name}"
+#   retention_in_days = 14
+# }
+
+resource "aws_cloudwatch_log_group" "cloudtrail_log" {
+  name              = "/aws/cloudtrail/logs"
   retention_in_days = 14
 }
 
 
 
-############################DynamoDB############################
+############################ DynamoDB ############################
 
 resource "aws_dynamodb_table" "OrderDB" {
   name           = "Orders"
@@ -148,7 +167,7 @@ resource "aws_sqs_queue" "deadletter" {
 }
 
 
-####################- IAM -################################
+#################### - IAM - ################################
 
 # Berechtigt Lambda an SQS und DynamoDB
 resource "aws_iam_role" "lambda_role" {
