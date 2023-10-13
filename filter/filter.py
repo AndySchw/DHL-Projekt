@@ -4,7 +4,6 @@ import os
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Attr
 
-
 # AWS services clients
 sqs = boto3.client('sqs')
 dynamodb = boto3.resource('dynamodb')
@@ -16,28 +15,22 @@ FAHRER_TABLE_NAME = 'Fahrer'
 BESTELLUNGEN_TABLE_NAME = 'Orders'
 
 def lambda_handler(event, context):
-    # 3. LAMBDA fragt Queue an
-    messages = sqs.receive_message(
-        QueueUrl=QUEUE_URL,
-        MaxNumberOfMessages=1,
-        WaitTimeSeconds=20  # adjust this as needed
-    )
-    if 'Messages' not in messages:
-        print("No messages in the queue")
-        return {"statusCode": 200, "body": "No messages"}
-
-    message_body = json.loads(messages['Messages'][0]['Body'])
-    receipt_handle = messages['Messages'][0]['ReceiptHandle']
+    # Ausdrucken des gesamten Events
+    print("Received event:", json.dumps(event))
     
-    # Extract necessary data
+    # Extrahieren der Nachricht aus dem Event
+    message_body_str = event['Records'][0]['body']
+    message_body = json.loads(message_body_str)
+    
+    # Extract necessary data from the message body
     package_id = message_body.get('packageID')
     restrictions = message_body.get('restrictions')
-    
-    # 4. Anfrage an DynamoDB (Table Fahrer) ob ein Fahrer verfügbar ist
+
+    # Anfrage an DynamoDB (Table Fahrer) ob ein Fahrer verfügbar ist
     fahrer_table = dynamodb.Table(FAHRER_TABLE_NAME)
     bestellungen_table = dynamodb.Table(BESTELLUNGEN_TABLE_NAME)
 
-    # Assuming that your table has a 'status' attribute and a primary key 'fahrerID'
+    # Assuming your table has a 'status' attribute and a primary key 'fahrerID'
     available_fahrer = fahrer_table.scan(
         FilterExpression=Attr('status').eq('frei')
     )['Items']
@@ -45,10 +38,10 @@ def lambda_handler(event, context):
     if not available_fahrer:
         print("No available drivers")
         return {"statusCode": 200, "body": "No available drivers"}
-    
+
     chosen_fahrer = available_fahrer[0]  # select the first available driver
     
-    # 5. LAMBDA passt DynamoDB (Table Fahrer) den Status des gewählten Fahrers an ( nicht belegt)
+    # LAMBDA passt DynamoDB (Table Fahrer) den Status des gewählten Fahrers an (nicht belegt)
     fahrer_table.update_item(
         Key={'fahrerID': chosen_fahrer['fahrerID']},
         UpdateExpression='SET #status = :status, current_package = :package_id',
@@ -61,17 +54,15 @@ def lambda_handler(event, context):
         }
     )
 
-
     bestellungen_table.update_item(
         Key={'packageID': package_id},
         UpdateExpression='SET lieferstatus = :lieferstatus',
         ExpressionAttributeValues={
-            ':lieferstatus': 'zugewiesen',  # or whatever status you'd like to set
+            ':lieferstatus': 'zugewiesen',
         }
     )
 
-
-    # 6. LAMBDA Infos an SES weiterreichen um EMAIL zu versenden Fahrer_Email, Paket_ID, DynamoDB Table ITEM Werte in formatierte Variante
+    # LAMBDA Infos an SES weiterreichen um EMAIL zu versenden
     EMAIL_TEXT = f"""
     Hallo {chosen_fahrer['name']}#{chosen_fahrer['fahrerID']},
     dein Paket hat die ID {package_id}#.
@@ -86,9 +77,9 @@ def lambda_handler(event, context):
                 'ToAddresses': [chosen_fahrer['email']],
             },
             Message={
-             'Subject': {'Data': 'Neues Paket'},
+                'Subject': {'Data': 'Neues Paket'},
                 'Body': {'Text': {'Data': EMAIL_TEXT}},
-           }
+            }
         )
         print(f"SES response: {response}")
     except ClientError as e:

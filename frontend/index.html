@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paket Formular</title>
+</head>
+<body>
+    <h1>Paketdaten eingeben</h1>
+    <form id="paketForm">
+        <label for="recipient_name">Empfänger Name:</label>
+        <input type="text" id="recipient_name" name="recipient_name" required><br><br>
+
+        <label for="recipient_address">Empfänger Adresse:</label>
+        <input type="text" id="recipient_address" name="recipient_address" required><br><br>
+
+        <label for="recipient_phone">Empfänger Telefonnummer:</label>
+        <input type="text" id="recipient_phone" name="recipient_phone" required><br><br>
+
+        <label for="sender_name">Absender Name:</label>
+        <input type="text" id="sender_name" name="sender_name" required><br><br>
+
+        <label for="sender_address">Absender Adresse:</label>
+        <input type="text" id="sender_address" name="sender_address" required><br><br>
+
+        <label for="sender_phone">Absender Telefonnummer:</label>
+        <input type="text" id="sender_phone" name="sender_phone" required><br><br>
+
+        <label for="dimensions_length">Paketlänge (cm):</label>
+        <input type="number" id="dimensions_length" name="dimensions_length" required><br><br>
+
+        <label for="dimensions_width">Paketbreite (cm):</label>
+        <input type="number" id="dimensions_width" name="dimensions_width" required><br><br>
+
+        <label for="dimensions_height">Pakethöhe (cm):</label>
+        <input type="number" id="dimensions_height" name="dimensions_height" required><br><br>
+
+        <label for="weight">Gewicht (kg):</label>
+        <input type="number" id="weight" name="weight" required><br><br>
+
+        <label for="date">Datum:</label>
+        <input type="date" id="date" name="date" required><br><br>
+
+        <label for="insurance_type">Versicherungstyp:</label>
+        <select id="insurance_type" name="insurance_type" required>
+            <option value="Basic">Basic</option>
+            <option value="Premium">Premium</option>
+            <option value="Gold">Gold</option>
+        </select><br><br>
+
+        <label for="insurance_value">Versicherungswert:</label>
+        <input type="number" id="insurance_value" name="insurance_value" required><br><br>
+
+        <label for="restrictions">Einschränkungen:</label>
+        <select id="restrictions" name="restrictions" required>
+            <option value="Sperrgut">Sperrgut</option>
+            <option value="Zerbrechlich">Zerbrechlich</option>
+            <option value="Liquid">Flüssig</option>
+            <option value="Flammable">Entflammbar</option>
+        </select><br><br>
+
+        <label for="value">Wert:</label>
+        <input type="number" id="value" name="value" required><br><br>
+
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        document.getElementById('paketForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const data = {
+                recipient_name: document.getElementById('recipient_name').value,
+                recipient_address: document.getElementById('recipient_address').value,
+                recipient_phone: document.getElementById('recipient_phone').value,
+                sender_name: document.getElementById('sender_name').value,
+                sender_address: document.getElementById('sender_address').value,
+                sender_phone: document.getElementById('sender_phone').value,
+                dimensions_length: document.getElementById('dimensions_length').value,
+                dimensions_width: document.getElementById('dimensions_width').value,
+                dimensions_height: document.getElementById('dimensions_height').value,
+                weight: document.getElementById('weight').value,
+                date: document.getElementById('date').value,
+                insurance_type: document.getElementById('insurance_type').value,
+                insurance_value: document.getElementById('insurance_value').value,
+                restrictions: document.getElementById('restrictions').value,
+                value: document.getElementById('value').value,
+            };
+
+            fetch('https://bji1oouay4.execute-api.eu-central-1.amazonaws.com/apitest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => console.log('Success:', data))
+            .catch((error) => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

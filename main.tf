@@ -1,7 +1,18 @@
 
-provider "aws" {
-  region = "eu-central-1"  
+
+terraform {
+  required_providers {
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+  }
 }
+
+provider "aws" {
+  region = "eu-central-1"
+}
+
 
 ############################# - Lambda - ##################################
 
@@ -66,6 +77,7 @@ resource "aws_lambda_function" "fahrer_lambda" {
   handler       = "filter.lambda_handler" 
   runtime       = "python3.9"  
   timeout = 25
+  
 
   filename = "./filter/filter.zip"
 
@@ -94,8 +106,8 @@ resource "aws_cloudwatch_log_group" "cloudtrail_log" {
 resource "aws_dynamodb_table" "OrderDB" {
   name           = "Orders"
   hash_key = "packageID"
-  read_capacity = 20
-  write_capacity = 20
+  read_capacity = 1
+  write_capacity = 1
 
   #stream aktivieren
   stream_view_type = "NEW_IMAGE"
@@ -110,8 +122,8 @@ resource "aws_dynamodb_table" "OrderDB" {
 resource "aws_dynamodb_table" "Fahrer" {
   name           = "Fahrer"
   hash_key = "fahrerID"
-  read_capacity = 20
-  write_capacity = 20
+  read_capacity = 1
+  write_capacity = 1
 
   #stream aktivieren
   stream_view_type = "NEW_IMAGE"
@@ -123,24 +135,63 @@ resource "aws_dynamodb_table" "Fahrer" {
   }
 }
 
+#######################-   Dynamo Fahrer füllen    -############################
+
+variable "regions" {
+  default = ["Würzburg", "Hannover", "Leipzig", "Hamburg", "Berlin"]
+}
+
+variable "paketzentrums" {
+  default = ["PZ1", "PZ4", "PZ2", "PZ6", "PZ9"]
+}
+
+variable "statuses" {
+  default = ["frei", "belegt"]
+}
+
+resource "random_id" "fahrer_id" {
+  count = 15
+  byte_length = 8
+}
+
+resource "random_string" "name" {
+  count = 15
+  length  = 10
+  special = false
+  upper   = false
+}
+
+resource "aws_dynamodb_table_item" "drivers" {
+  count = 15
+  depends_on = [ aws_dynamodb_table.Fahrer ]
+
+  table_name = aws_dynamodb_table.Fahrer.name
+  hash_key   = aws_dynamodb_table.Fahrer.hash_key
+
+  item = jsonencode({
+    fahrerID  = { S = random_id.fahrer_id[count.index].hex }
+    name      = { S = random_string.name[count.index].result }
+    region    = { S = element(var.regions, count.index % length(var.regions)) }
+    pz        = { S = element(var.paketzentrums, count.index % length(var.paketzentrums)) }
+    status    = { S = element(var.statuses, count.index % length(var.statuses)) }
+    paketID   = { NULL = true }
+    email     = { S = "andy.emich@docc.techstarter.de" }
+    timestamp = { S = "${timestamp()}" }
+  })
+}
+
+
+
 #######################-   SQS FIFO    -############################
 
 resource "aws_sqs_queue" "sqs_verteiler" {
   name                      = "sqs_verteiler.fifo"
-  delay_seconds             = 90
-  max_message_size          = 2048
-  message_retention_seconds = 86400
-  receive_wait_time_seconds = 10
   fifo_queue                  = true
   content_based_deduplication = true
-  redrive_policy = jsonencode({
-    deadLetterTargetArn = aws_sqs_queue.deadletter.arn
-    maxReceiveCount     = 4
-  })
-
-  tags = {
-    Environment = "production"
-  }
+  # redrive_policy = jsonencode({
+  #   deadLetterTargetArn = aws_sqs_queue.deadletter.arn
+  #   maxReceiveCount     = 4
+  # })
 }
 
 

@@ -8,7 +8,7 @@ from datetime import date
 # Initialize the DynamoDB resource
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('Orders')  # Replace 'YourTableName' with your table's name
-table2 = dynamodb.Table('Fahrer')
+
 
 def random_string(length):
     """Generate a random string of fixed length."""
@@ -24,40 +24,6 @@ def generate_packageID():
     timestamp = int(time.time() * 1000)  # Current time in milliseconds
     random_digits = ''.join(random.choice(string.digits) for i in range(4))
     return f"FP{timestamp}{random_digits}"
-
-
-################### für 2. Tabelle
-
-def generate_fahrerID():
-    """Generate a unique fahrerID."""
-    timestamp = int(time.time() * 1000)  # Current time in milliseconds
-    random_digits = ''.join(random.choice(string.digits) for i in range(4))
-    return f"FP{timestamp}{random_digits}"
-
-        
-
-def random_email():
-    """Generate a random email address."""
-    letters = string.ascii_letters
-    username = ''.join(random.choice(letters) for i in range(5))
-    domain = ''.join(random.choice(letters) for i in range(3))
-    return f"{username}@{domain}.com"
-
-
-def random_status():
-    """Generate a random status."""
-    return random.choice(["frei", "belegt"])
-
-def random_region():
-    """Generate a random region."""
-    return random.choice(["Würzburg", "Hannover", "Leipzig", "Hamburg", "Berlin"])
-
-
-def random_paketzentrum():
-    """Generate a random region."""
-    return random.choice(["PZ1", "PZ4", "PZ2", "PZ6", "PZ9"])
-
-
 
 
 
@@ -87,23 +53,7 @@ def lambda_handler(event, context):
         # Insert the item into the DynamoDB table
         table.put_item(Item=item)
 
-        ###### Tabelle 2 Fahrer
         
-        for _ in range(4):
-            item2 = {
-                "fahrerID": generate_fahrerID(),
-                "name": random_string(10),
-                "region": random_region(),
-                "pz": random_paketzentrum(),
-                "status": random_status(),
-                "paketID": None,
-                # "email": random_email(),
-                "email": "andy.emich@docc.techstarter.de",
-                "timestamp": int(time.time() * 1000)  # Current time in milliseconds
-            }
-
-            # Insert the item into the second DynamoDB table
-            table2.put_item(Item=item2)
         return {
             'statusCode': 200,
             'body': f'Successfully inserted item with packageID {item["packageID"]}'
