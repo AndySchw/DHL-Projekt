@@ -3,6 +3,7 @@ import json
 import string
 import random
 import time
+from decimal import Decimal
 from datetime import date
 
 # Initialize the DynamoDB resource
@@ -28,6 +29,7 @@ def lambda_handler(event, context):
     try:
         # Daten aus dem API-Gateway-Ereignis abrufen
         body = json.loads(event['body'])
+    
         
         # Daten aus dem Formular in das item-Datenobjekt einfügen
         item = {
@@ -40,21 +42,18 @@ def lambda_handler(event, context):
             "dimensions_length": int(body['dimensions_length']),
             "dimensions_width": int(body['dimensions_width']),
             "dimensions_height": int(body['dimensions_height']),
-            "weight": float(body['weight']),
+            "weight": Decimal(str(body['weight'])),
             "packageID": generate_packageID(),
             "date": body['date'],
             "insurance_type": body['insurance_type'],
-            "insurance_value": float(body['insurance_value']),
+            "insurance_value": Decimal(str(body['insurance_value'])),
             "restrictions": body['restrictions'],
-            "value": float(body['value']),
+            "value": Decimal(str(body['value'])),
             "lieferstatus": "ausstehend"
         }
 
-        # Das item-Datenobjekt in einen JSON-String umwandeln
-        item_json = json.dumps(item)
-
         # Eintrag in die DynamoDB-Tabelle einfügen
-        response = table.put_item(Item=json.loads(item_json))
+        response = table.put_item(Item=item)
 
         return {
             'statusCode': 200,

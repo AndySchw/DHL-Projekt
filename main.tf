@@ -261,25 +261,14 @@ resource "aws_iam_role_policy" "lambda_policy" {
 
 ####################### HTTP API Gateway und die Lambda dafür ########################
 
-# # Erstellt eine Lambda-Funktion mit der Ressource "aws_lambda_function"
-# resource "aws_lambda_function" "example" {
-#   function_name = "example_lambda"  # Der Name der Lambda-Funktion
-#   handler       = "apilambda.lambda_handler"  # Der Handler der Lambda-Funktion
-#   runtime       = "python3.9"  # Die Laufzeitumgebung für die Lambda-Funktion
-
-#   filename = "./api/apilambda.zip"  # Der Pfad zur ZIP-Datei, die den Code der Lambda-Funktion enthält
-
-#   role          = aws_iam_role.lambda_exec_role.arn  # Die IAM-Rolle, die der Lambda-Funktion zugewiesen wird
-# }
-
 # Erstellt eine API Gateway mit der Ressource "aws_apigatewayv2_api"
 resource "aws_apigatewayv2_api" "apigate" {
   name          = "API-Gateway-Input"  # Der Name der API Gateway
   protocol_type = "HTTP" # Der Protokolltyp der API Gateway
   cors_configuration {
-    allow_origins = ["http://*"]
-    allow_methods = ["POST", "GET", "DELETE", "*"]
-    allow_headers = ["content-type"]
+    allow_origins = ["http://127.0.0.1:5500"]
+    allow_methods = ["*"]
+    allow_headers = ["*"]
     max_age = 300
   }
 }
