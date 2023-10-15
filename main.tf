@@ -258,3 +258,75 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
+
+####################### HTTP API Gateway und die Lambda dafür ########################
+
+# # Erstellt eine Lambda-Funktion mit der Ressource "aws_lambda_function"
+# resource "aws_lambda_function" "example" {
+#   function_name = "example_lambda"  # Der Name der Lambda-Funktion
+#   handler       = "apilambda.lambda_handler"  # Der Handler der Lambda-Funktion
+#   runtime       = "python3.9"  # Die Laufzeitumgebung für die Lambda-Funktion
+
+#   filename = "./api/apilambda.zip"  # Der Pfad zur ZIP-Datei, die den Code der Lambda-Funktion enthält
+
+#   role          = aws_iam_role.lambda_exec_role.arn  # Die IAM-Rolle, die der Lambda-Funktion zugewiesen wird
+# }
+
+# Erstellt eine API Gateway mit der Ressource "aws_apigatewayv2_api"
+resource "aws_apigatewayv2_api" "apigate" {
+  name          = "API-Gateway-Input"  # Der Name der API Gateway
+  protocol_type = "HTTP" # Der Protokolltyp der API Gateway
+  cors_configuration {
+    allow_origins = ["http://*"]
+    allow_methods = ["POST", "GET", "DELETE", "*"]
+    allow_headers = ["content-type"]
+    max_age = 300
+  }
+}
+
+# Erstellt eine Route für die API Gateway mit der Ressource "aws_apigatewayv2_route"
+resource "aws_apigatewayv2_route" "apirout" {
+  api_id    = aws_apigatewayv2_api.apigate.id  # Die ID der API Gateway, zu der die Route gehört
+  route_key = "ANY /datain"  # Der Schlüssel der Route (Methode und Pfad)
+  target    = "integrations/${aws_apigatewayv2_integration.apiint.id}"  # Das Ziel der Route (in diesem Fall eine Integration)
+}
+
+# Erstellt eine Integration zwischen der API Gateway und der Lambda-Funktion mit der Ressource "aws_apigatewayv2_integration"
+resource "aws_apigatewayv2_integration" "apiint" {
+  api_id           = aws_apigatewayv2_api.apigate.id  # Die ID der API Gateway, zu der die Integration gehört
+  integration_type = "AWS_PROXY"  # Der Typ der Integration
+
+  connection_type      = "INTERNET"  # Der Verbindungstyp der Integration
+  description          = "Lambda integration"  # Die Beschreibung der Integration
+  integration_method   = "POST"  # Die Methode, die für die Integration verwendet wird
+  integration_uri      = aws_lambda_function.orderput.invoke_arn  # Die URI, die aufgerufen wird, wenn die Integration ausgelöst wird
+}
+
+# Erstellt eine Stufe für die API Gateway mit der Ressource "aws_apigatewayv2_stage"
+resource "aws_apigatewayv2_stage" "apistage" {
+  api_id      = aws_apigatewayv2_api.apigate.id  # Die ID der API Gateway, zu der die Stufe gehört
+  name        = "$default"  # Der Name der Stufe
+  auto_deploy = true  # Gibt an, ob Änderungen an dieser Stufe automatisch bereitgestellt werden sollen
+}
+
+# Erstellung eines HTTP API-Gateway mit Lambda integration: in eu-central-1 Lamda-Funktion?...., Version 2.0 und API-Name: API-Gateway-Input, 
+# und einer Routen konfiguration: Methode: post, Ressourcenpfad:?, Integrationsziel:? (Lambda für die API), Stufen konfiguration: Stufenname: $default,
+
+# Erstellt eine Berechtigung für die Lambda-Funktion
+resource "aws_lambda_permission" "apigw" {
+  # Eindeutige ID für die Berechtigungserklärung
+  statement_id  = "AllowExecutionFromAPIGateway"
+  
+  # Die Aktion, die die API Gateway auf die Lambda-Funktion ausführen darf
+  action        = "lambda:InvokeFunction"
+  
+  # Der Name der Lambda-Funktion, auf die sich die Berechtigung bezieht
+  function_name = aws_lambda_function.orderput.function_name
+  
+  # Der AWS-Service (in diesem Fall API Gateway), der die Berechtigung erhält
+  principal     = "apigateway.amazonaws.com"
+
+  # Die ARN der API Gateway, die die Berechtigung erhält, um die Lambda-Funktion auszulösen
+  source_arn = "${aws_apigatewayv2_api.apigate.execution_arn}/*/*"
+}
+

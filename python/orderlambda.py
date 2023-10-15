@@ -1,65 +1,67 @@
-
 import boto3
-import random
+import json
 import string
+import random
 import time
 from datetime import date
 
 # Initialize the DynamoDB resource
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('Orders')  # Replace 'YourTableName' with your table's name
-
+table = dynamodb.Table('Orders')  # Ersetzen Sie 'Orders' durch den Namen Ihrer Tabelle
 
 def random_string(length):
-    """Generate a random string of fixed length."""
+    """Generiert einen zufälligen String der festen Länge."""
     letters = string.ascii_letters + string.digits + " "
     return ''.join(random.choice(letters) for i in range(length))
 
 def random_phone():
-    """Generate a random phone number."""
+    """Generiert eine zufällige Telefonnummer."""
     return ''.join(random.choice(string.digits) for i in range(10))
 
 def generate_packageID():
-    """Generate a unique packageID."""
-    timestamp = int(time.time() * 1000)  # Current time in milliseconds
+    """Generiert eine eindeutige packageID."""
+    timestamp = int(time.time() * 1000)  # Aktuelle Zeit in Millisekunden
     random_digits = ''.join(random.choice(string.digits) for i in range(4))
     return f"FP{timestamp}{random_digits}"
 
-
-
 def lambda_handler(event, context):
     try:
-        # Create a random item
+        # Daten aus dem API-Gateway-Ereignis abrufen
+        body = json.loads(event['body'])
+        
+        # Daten aus dem Formular in das item-Datenobjekt einfügen
         item = {
-            "recipient_name": random_string(10),
-            "recipient_address": random_string(25),
-            "recipient_phone": random_phone(),
-            "sender_name": random_string(10),
-            "sender_address": random_string(25),
-            "sender_phone": random_phone(),
-            "dimensions_length": random.randint(1, 100),
-            "dimensions_width": random.randint(1, 100),
-            "dimensions_height": random.randint(1, 100),
-            "weight": random.randint(1, 50),
+            "recipient_name": body['recipient_name'],
+            "recipient_address": body['recipient_address'],
+            "recipient_phone": body['recipient_phone'],
+            "sender_name": body['sender_name'],
+            "sender_address": body['sender_address'],
+            "sender_phone": body['sender_phone'],
+            "dimensions_length": int(body['dimensions_length']),
+            "dimensions_width": int(body['dimensions_width']),
+            "dimensions_height": int(body['dimensions_height']),
+            "weight": float(body['weight']),
             "packageID": generate_packageID(),
-            "date": str(date.today()),  # Insert today's date
-            "insurance_type": random.choice(["Basic", "Premium", "Gold"]),
-            "insurance_value": random.randint(1, 5000),
-            "restrictions": random.choice(["Sperrgut", "Zerbrechlich", "Liquid", "Flammable"]),  # Two random restrictions
-            "value": random.randint(1, 1000),
+            "date": body['date'],
+            "insurance_type": body['insurance_type'],
+            "insurance_value": float(body['insurance_value']),
+            "restrictions": body['restrictions'],
+            "value": float(body['value']),
             "lieferstatus": "ausstehend"
         }
 
-        # Insert the item into the DynamoDB table
-        table.put_item(Item=item)
+        # Das item-Datenobjekt in einen JSON-String umwandeln
+        item_json = json.dumps(item)
 
-        
+        # Eintrag in die DynamoDB-Tabelle einfügen
+        response = table.put_item(Item=json.loads(item_json))
+
         return {
             'statusCode': 200,
-            'body': f'Successfully inserted item with packageID {item["packageID"]}'
+            'body': json.dumps({'message': f'Erfolgreich Datensatz mit packageID {item["packageID"]} eingefügt'})
         }
     except Exception as e:
         return {
             'statusCode': 500,
-            'body': f'Error inserting item into DynamoDB: {str(e)}'
+            'body': json.dumps({'error': f'Fehler beim Einfügen des Datensatzes in DynamoDB: {str(e)}'})
         }
